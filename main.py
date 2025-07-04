@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()      
 import os
 import logging
 from telegram import Update
@@ -9,9 +11,9 @@ logging.basicConfig(
 )
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-
+print(TOKEN)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send.message(chat_id=update.effective_chat.id, text="Привет! Я бот-напоминалка o подписках. Используй /add для добавления подписки")
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Привет! Я бот-напоминалка o подписках. Используй /add для добавления подписки")
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Я умею напоминать o подписах. Команлы: /start, /add, /list, /delete, help.")
@@ -32,3 +34,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
