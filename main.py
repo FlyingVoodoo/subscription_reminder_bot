@@ -24,7 +24,9 @@ def main():
     application = ApplicationBuilder().token(TOKEN).build()
 
     start_handler = CommandHandler('start', start)
+    help_handler = CommandHandler('help', help)
     application.add_handler(start_handler)
+    application.add_handler(help_handler)
 
     application.run_polling()
 
