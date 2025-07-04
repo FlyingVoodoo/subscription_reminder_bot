@@ -45,7 +45,15 @@ async def add_service_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     context.user_data['service_name'] = update.message.text
     await update.message.reply_text(f'Хорошо, "{context.user_data["service_name"]}". Теперь введите сумму платежа (например), "9.99"):')
     return ADD_AMOUNT
-
+async def add_ammount(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    try:
+        ammount = float(update.message.text.replace('.', '.'))
+        context.user_data['amount'] = ammount
+        await update.message.reply_text('Понял. Теперь введите дату следующей оплаты в формате ГГГГ-ММ-ДД (например, "2025-07-15"):')
+        return ADD_DATE
+    except ValueError:
+        await update.message.reply_text('Это не похоже на число. Пожалуйста, введите сумму цифрами (например, "9.99"):')
+        return ADD_AMOUNT
 
 def main():
     if TOKEN is None:
