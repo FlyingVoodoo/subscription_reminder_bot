@@ -36,7 +36,7 @@ def add_subscription(user_id: int, service_name: str, amount: float, next_paymen
 def get_subscribtion_by_user(user_id: int) -> list[tuple]:
     con = sqlite3.connect(DB_NAME)
     cur = con.cursor()
-    cur.execute("SELECT id, service_name, amount, next_payment_date FROM subscriptions WHERE user_id = ?", (user_id))
+    cur.execute("SELECT id, service_name, amount, next_payment_date FROM subscriptions WHERE user_id = ?", (user_id,))
     subscriptions = cur.fetchall()
     con.close()
     return subscriptions

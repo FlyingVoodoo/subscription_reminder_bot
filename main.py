@@ -76,7 +76,7 @@ async def add_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             next_payment_date=date_str
         )
         await update.message.reply_text(
-            f"Отлично! Подписка '{context.user_data['service_name']}' на сумму {context.user_data['amount']} rub. "
+            f"Отлично! Подписка '{context.user_data['service_name']}' на сумму {context.user_data['amount']} RUB. "
             f"со следующей оплатой {date_str} добавлена."
         )
         return ConversationHandler.END
@@ -99,7 +99,7 @@ async def list_subscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     message_text = "Ваши подписки:\n\n"
     for sub_id, service_name, amount, next_payment_date in subscriptions:
-        message_text += f"**ID'{sub_id}'**\n" \
+        message_text += f"**ID {sub_id}**\n" \
                         f"Сервис: {service_name}\n" \
                         f"Сумма: {amount: .2f}\n" \
                         f"Дата оплаты: {next_payment_date}\n\n"
