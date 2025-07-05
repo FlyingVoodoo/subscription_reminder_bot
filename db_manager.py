@@ -8,8 +8,9 @@ def create_table():
 
     cur.execute('''
         CREATE TABLE IF NOT EXISTS subscriptions (
-            id INTEGER PRIMAREY KEY,
+            id INTEGER PRIMARY KEY,
             user_id INTEGER NOT NULL,
+            service_name TEXT NOT NULL,
             amount REAL,
             next_payment_date TEXT NOT NULL,
             reminder_setnt INTEGER DEFAULT 0 -- 0: не отправлено, 1: отправлено (для текущего периода)
@@ -24,7 +25,7 @@ def add_subscription(user_id: int, service_name: str, amount: float, next_paymen
     con = sqlite3.connect(DB_NAME)
     cur = con.cursor()
     cur.execute('''
-        INSER INTO subscriptions (user_id, service_name, amount, next_payment_date)
+        INSERT INTO subscriptions (user_id, service_name, amount, next_payment_date)
         VALUES (?, ?, ?, ?)
     ''', (user_id, service_name, amount, next_payment_date))
     con.commit()

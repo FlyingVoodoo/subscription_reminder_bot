@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()      
 import os
 import logging
-from datetime import datetime
+import datetime
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -38,7 +38,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def add_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Starting add-process and asks for name of serv"""
-    await update.message.reply_text('Отлично! Добавим новую подпискую ВВедите название сервиса:')
+    await update.message.reply_text('Отлично! Добавим новую подпискую Введите название сервиса:')
     return ADD_SERVICE_NAME 
 
 async def add_service_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -57,13 +57,21 @@ async def add_amount(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return ADD_AMOUNT
     
 async def add_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    date_str = update.message.text
+    date_str = update.message.text.strip()
+    logging.info(f"Получена строка даты от пользователя '{date_str}'")
+
     try:
-        datetime.datetime.strptime(date_str, '%Y-%m-$d')
+        parsed_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+        logging.info(f"Дата успешно репарсена: {parsed_date}")
+
+        if parsed_date < datetime.date.today():
+            await update.message.reply_text("Дата оплаты не может быть в прошлом. Пожалуйста, введите корректную дату.")
+            return ADD_DATE
+        
         add_subscription(
             user_id=update.effective_user.id,
             service_name=context.user_data['service_name'],
-            amount=context.user_data['amount']
+            amount=context.user_data['amount'],
             next_payment_date=date_str
         )
         await update.message.reply_text(
@@ -71,7 +79,8 @@ async def add_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             f"со следующей оплатой {date_str} добавлена."
         )
         return ConversationHandler.END
-    except ValueError:
+    except ValueError as e:
+        logging.info(f"Ошибка парсинга даты '{date_str}': {e}")
         await update.message.reply_text('Неверный формат даты. Пожалуйста, введите дату в формате ГГГГ-ММ-ДД:')
         return ADD_DATE
     
@@ -92,7 +101,7 @@ def main():
     start_handler = CommandHandler('start', start)
     help_handler = CommandHandler('help', help)
     add_conversation_handler = ConversationHandler(
-        entry_points=[CommandHandler('add', add_start)]
+        entry_points=[CommandHandler('add', add_start)],
         states={
             ADD_SERVICE_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_service_name)],
             ADD_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_amount)],
