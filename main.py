@@ -13,8 +13,7 @@ from telegram.ext import (
     filters
 )
 
-from db_manager import add_subscription
-from db_manager import create_table
+from db_manager import add_subscription, create_table, get_subscribtion_by_user
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -26,6 +25,8 @@ TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 
 ADD_SERVICE_NAME, ADD_AMOUNT, ADD_DATE = range(3)
+
+DELETE_ID, DELETE_CONFIRMATION = range(3, 5)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -88,6 +89,22 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await update.message.reply_text('Операция отменена. Теперь можете начать заново.')
     return ConversationHandler.END
 
+async def list_subscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    subscriptions = get_subscribtion_by_user(user_id)
+
+    if not subscriptions:
+        await update.message.reply_text("У вас пока нет активных подписок. Используйте /add для добавления первой!")
+        return
+    
+    message_text = "Ваши подписки:\n\n"
+    for sub_id, service_name, amount, next_payment_date in subscriptions:
+        message_text += f"**ID'{sub_id}'**\n" \
+                        f"Сервис: {service_name}\n" \
+                        f"Сумма: {amount: .2f}\n" \
+                        f"Дата оплаты: {next_payment_date}\n\n"
+    await update.message.reply_text(message_text, parse_mode='Markdown')
+        
 def main():
     create_table()
     logging.info("База данных и таблица подписок проверены.созданы.")
@@ -100,6 +117,7 @@ def main():
 
     start_handler = CommandHandler('start', start)
     help_handler = CommandHandler('help', help)
+    list_handler = CommandHandler('list', list_subscriptions)
     add_conversation_handler = ConversationHandler(
         entry_points=[CommandHandler('add', add_start)],
         states={
@@ -113,6 +131,7 @@ def main():
     application.add_handler(start_handler)
     application.add_handler(help_handler)
     application.add_handler(add_conversation_handler)
+    application.add_handler(list_handler)
 
     logging.info("Бот запущен. Ctrl+C для остановки работы.")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
