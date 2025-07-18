@@ -40,6 +40,23 @@ def get_subscribtion_by_user(user_id: int) -> list[tuple]:
     subscriptions = cur.fetchall()
     con.close()
     return subscriptions
+
+def delete_subscription(user_id: int, sub_id: int) -> bool:
+    """
+    Удаляет подписку по user_id и ID подписки.
+    Возвращает True, если подписка была удалена, иначе False.
+    """
+    con = sqlite3.connect(DB_NAME)
+    cur = con.cursor()
+    
+    cur.execute("DELETE FROM subscriptions WHERE user_id = ? AND id = ?", (user_id, sub_id))
+    rows_affected = cur.rowcount 
+    
+    con.commit()
+    con.close()
+    
+    return rows_affected > 0 
+
 if __name__ == '__main__':
     create_table()
     print(f"База данных '{DB_NAME}' и таблица 'subscriptions' проверены/созданы.")

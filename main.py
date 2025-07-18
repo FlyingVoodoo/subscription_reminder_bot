@@ -13,7 +13,7 @@ from telegram.ext import (
     filters
 )
 
-from db_manager import add_subscription, create_table, get_subscribtion_by_user
+from db_manager import add_subscription, create_table, get_subscribtion_by_user, delete_subscription
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -86,9 +86,27 @@ async def add_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return ADD_DATE
     
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text('Операция отменена. Теперь можете начать заново.')
+    """
+    Отменяет текущую операцию (если она в ConversationHandler) и завершает его.
+    Очищает временные данные пользователя, связанные с текущим диалогом.
+    """
+    logging.info(f"Операция отменена пользователем {update.effective_user.id}")
+    
+    if 'service_name' in context.user_data:
+        del context.user_data['service_name']
+    if 'amount' in context.user_data:
+        del context.user_data['amount']
+    
+    await update.message.reply_text('Операция отменена. Вы вернулись в главное меню. Теперь можете начать заново.')
     return ConversationHandler.END
 
+async def cancel_already_in_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Сообщает пользователю, что он уже находится в главном меню,
+    если команда /cancel введена вне активного диалога.
+    """
+    await update.message.reply_text('Вы уже находитесь в главном меню. Нет активных операций для отмены.')
+    
 async def list_subscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     subscriptions = get_subscribtion_by_user(user_id)
@@ -104,7 +122,41 @@ async def list_subscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE)
                         f"Сумма: {amount: .2f}\n" \
                         f"Дата оплаты: {next_payment_date}\n\n"
     await update.message.reply_text(message_text, parse_mode='Markdown')
-        
+
+async def delete_subscription_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Обрабатывает команду /delete.
+    Принимает ID подписки в качестве аргумента.
+    Пример: /delete 123
+    """
+    user_id = update.effective_user.id
+    args = context.args
+
+    if not args:
+        await update.message.reply_text(
+            "Пожалуйста, укажите ID подписки, которую хотите удалить. "
+            "Чтобы узнать ID, используйте команду /list.\n"
+            "Пример: `/delete 123`"
+        )
+        return
+
+    try:
+        sub_id_to_delete = int(args[0])
+    except ValueError:
+        await update.message.reply_text(
+            "Неверный формат ID. Пожалуйста, введите числовой ID подписки. "
+            "Чтобы узнать ID, используйте команду /list.\n"
+            "Пример: `/delete 123`"
+        )
+        return
+
+    deleted_successfully = delete_subscription(user_id, sub_id_to_delete)
+
+    if deleted_successfully:
+        await update.message.reply_text(f"Подписка с ID **{sub_id_to_delete}** успешно удалена.")
+    else:
+        await update.message.reply_text(f"Подписка с ID **{sub_id_to_delete}** не найдена в вашем списке.")
+
 def main():
     create_table()
     logging.info("База данных и таблица подписок проверены.созданы.")
@@ -118,6 +170,7 @@ def main():
     start_handler = CommandHandler('start', start)
     help_handler = CommandHandler('help', help)
     list_handler = CommandHandler('list', list_subscriptions)
+    cancel_in_main_menu_handler = CommandHandler('cancel', cancel_already_in_main_menu)
     add_conversation_handler = ConversationHandler(
         entry_points=[CommandHandler('add', add_start)],
         states={
@@ -127,11 +180,14 @@ def main():
         },
         fallbacks=[CommandHandler('cancel', cancel_command)]
     )
+    delete_handler = CommandHandler('delete', delete_subscription_command)
 
     application.add_handler(start_handler)
     application.add_handler(help_handler)
     application.add_handler(add_conversation_handler)
     application.add_handler(list_handler)
+    application.add_handler(delete_handler)
+    application.add_handler(cancel_in_main_menu_handler)
 
     logging.info("Бот запущен. Ctrl+C для остановки работы.")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
