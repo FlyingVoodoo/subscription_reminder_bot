@@ -3,12 +3,13 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler, filters
 
-from db_manager import add_subscription, get_subscribtion_by_user, delete_subscription, update_subscription_after_payment
+from db_manager import add_subscription, get_subscribtion_by_user, delete_subscription, update_subscription_after_payment, update_reminder_status, get_subscriptions_for_reminders
 
 ADD_SERVICE_NAME, ADD_AMOUNT, ADD_DATE = range(3)
 
 DELETE_ID, DELETE_CONFIRMATION = range(3, 5)
 
+logger = logging.getLogger(__name__)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Привет! Я бот-напоминалка o подписках. Используй /add для добавления подписки")
@@ -50,7 +51,7 @@ async def add_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             await update.message.reply_text("Дата оплаты не может быть в прошлом. Пожалуйста, введите корректную дату.")
             return ADD_DATE
         
-        add_subscription(
+        await add_subscription(
             user_id=update.effective_user.id,
             service_name=context.user_data['service_name'],
             amount=context.user_data['amount'],
@@ -90,7 +91,7 @@ async def cancel_already_in_main_menu(update: Update, context: ContextTypes.DEFA
     
 async def list_subscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    subscriptions = get_subscribtion_by_user(user_id)
+    subscriptions = await get_subscribtion_by_user(user_id)
 
     if not subscriptions:
         await update.message.reply_text("У вас пока нет активных подписок. Используйте /add для добавления первой!")
@@ -131,7 +132,7 @@ async def delete_subscription_command(update: Update, context: ContextTypes.DEFA
         )
         return
 
-    deleted_successfully = delete_subscription(user_id, sub_id_to_delete)
+    deleted_successfully = await delete_subscription(user_id, sub_id_to_delete)
 
     if deleted_successfully:
         await update.message.reply_text(f"Подписка с ID **{sub_id_to_delete}** успешно удалена.")
@@ -163,8 +164,7 @@ async def paid_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
         return
 
-    # Вызов синхронной функции БД
-    success, service_name, new_date_str = update_subscription_after_payment(user_id, sub_id_to_mark_paid)
+    success, service_name, new_date_str = await update_subscription_after_payment(user_id, sub_id_to_mark_paid)
 
     if success:
         await update.message.reply_text(

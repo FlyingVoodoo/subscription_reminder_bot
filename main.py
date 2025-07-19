@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()      
 import os
 import logging
-import datetime
+import asyncio
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -13,9 +13,10 @@ from telegram.ext import (
     filters
 )
 
-from db_manager import add_subscription, create_table, get_subscribtion_by_user, delete_subscription
+from db_manager import create_table
 
 import handlers
+
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -24,15 +25,17 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
+async def post_init(application):
+    await create_table()
+    logging.info("База данных и таблица подписок проверены/созданы.")
+
 def main():
-    create_table()
-    logging.info("База данных и таблица подписок проверены.созданы.")
 
     if TOKEN is None:
         print("Ошибка: Токен бота не найденю Установите переменную окружения")
         return
     
-    application = ApplicationBuilder().token(TOKEN).build()
+    application = ApplicationBuilder().token(TOKEN).post_init(post_init).build()
 
     start_handler = CommandHandler('start', handlers.start)
     help_handler = CommandHandler('help', handlers.help)
