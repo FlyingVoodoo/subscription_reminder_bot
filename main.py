@@ -31,7 +31,7 @@ async def post_init(application):
     await create_table()
     logging.info("База данных и таблица подписок проверены/созданы.")
 
-    application.job_queue.run_repeating(check_and_send_reminders, interval=60, first=10, data="periodic_check")
+    application.job_queue.run_repeating(check_and_send_reminders, interval=3600*4, first=10, data="periodic_check")
     logging.info("Задача проверки напоминаний запланирована.")
 
 def main():
