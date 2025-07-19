@@ -2,7 +2,7 @@ import datetime
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler, filters
-
+from telegram.constants import ParseMode
 from db_manager import add_subscription, get_subscribtion_by_user, delete_subscription, update_subscription_after_payment, update_reminder_status, get_subscriptions_for_reminders
 
 ADD_SERVICE_NAME, ADD_AMOUNT, ADD_DATE = range(3)
@@ -11,11 +11,34 @@ DELETE_ID, DELETE_CONFIRMATION = range(3, 5)
 
 logger = logging.getLogger(__name__)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Привет! Я бот-напоминалка o подписках. Используй /add для добавления подписки")
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.effective_user
+    await update.message.reply_html(
+        f"Привет, {user.mention_html()}! 👋\n\n"
+        "Я твой личный помощник для отслеживания подписок и регулярных платежей. "
+        "Я буду напоминать тебе о предстоящих оплатах, чтобы ты ничего не пропустил!\n\n"
+        "**Что я умею:**\n"
+        "✨ Добавлять новые подписки: **/add**\n"
+        "📋 Показать все твои подписки: **/list**\n"
+        "✅ Отметить подписку как оплаченную: **/paid <ID>**\n"
+        "🗑️ Удалить подписку: **/delete <ID>**\n\n"
+        "Если нужна помощь, просто напиши **/help**.",
+        parse_mode=ParseMode.MARKDOWN # Используем MARKDOWN для жирного текста и эмодзи
+    )
 
-async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Я умею напоминать o подписах. Команлы:  /start, /add, /list, /delete, /help, /paid.")
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(
+        "Вот список команд, которые я понимаю:\n\n"
+        "**/add** - Начать процесс добавления новой подписки. Я попрошу название, сумму и дату следующей оплаты.\n"
+        "**/list** - Показать все твои активные подписки с их ID, названиями, суммами и датами оплаты.\n"
+        "**/paid <ID>** - Отметить подписку как оплаченную. Я перенесу дату оплаты на месяц вперед и сброшу напоминания.\n"
+        "   _Пример:_ `/paid 123` (где 123 - это ID подписки из /list)\n"
+        "**/delete <ID>** - Удалить подписку из твоего списка.\n"
+        "   _Пример:_ `/delete 456`\n"
+        "**/cancel** - Отменить любую текущую операцию (например, если ты добавляешь подписку, но передумал).\n\n"
+        "Если у тебя возникнут вопросы, не стесняйся спрашивать!",
+        parse_mode=ParseMode.MARKDOWN # Используем MARKDOWN для жирного и курсива
+    )
 
 # --- Function for command /add (Conversation Handler) ---
 
@@ -127,7 +150,11 @@ async def delete_subscription_command(update: Update, context: ContextTypes.DEFA
     deleted_successfully = await delete_subscription(user_id, sub_id_to_delete)
 
     if deleted_successfully:
-        await update.message.reply_text(f"Подписка с ID **{sub_id_to_delete}** успешно удалена.")
+        await update.message.reply_text(
+            f"Подписка с ID **{sub_id_to_delete}** успешно удалена. "
+            "Чтобы посмотреть оставшиеся подписки, используйте команду **/list**.",
+            parse_mode=ParseMode.MARKDOWN
+        )
     else:
         await update.message.reply_text(f"Подписка с ID **{sub_id_to_delete}** не найдена в вашем списке.")
 
