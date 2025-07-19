@@ -15,7 +15,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Привет! Я бот-напоминалка o подписках. Используй /add для добавления подписки")
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Я умею напоминать o подписах. Команлы: /start, /add, /list, /delete, help.")
+    await update.message.reply_text("Я умею напоминать o подписах. Команлы:  /start, /add, /list, /delete, /help, /paid.")
 
 # --- Function for command /add (Conversation Handler) ---
 
@@ -68,10 +68,7 @@ async def add_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return ADD_DATE
     
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """
-    Отменяет текущую операцию (если она в ConversationHandler) и завершает его.
-    Очищает временные данные пользователя, связанные с текущим диалогом.
-    """
+
     logging.info(f"Операция отменена пользователем {update.effective_user.id}")
     
     if 'service_name' in context.user_data:
@@ -83,15 +80,14 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     return ConversationHandler.END
 
 async def cancel_already_in_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Сообщает пользователю, что он уже находится в главном меню,
-    если команда /cancel введена вне активного диалога.
-    """
+
     await update.message.reply_text('Вы уже находитесь в главном меню. Нет активных операций для отмены.')
     
 async def list_subscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     subscriptions = await get_subscribtion_by_user(user_id)
+
+    logger.info(f"Получены подписки для пользователя {user_id} из БД: {subscriptions}")
 
     if not subscriptions:
         await update.message.reply_text("У вас пока нет активных подписок. Используйте /add для добавления первой!")
@@ -106,11 +102,7 @@ async def list_subscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await update.message.reply_text(message_text, parse_mode='Markdown')
 
 async def delete_subscription_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Обрабатывает команду /delete.
-    Принимает ID подписки в качестве аргумента.
-    Пример: /delete 123
-    """
+ 
     user_id = update.effective_user.id
     args = context.args
 
@@ -140,12 +132,11 @@ async def delete_subscription_command(update: Update, context: ContextTypes.DEFA
         await update.message.reply_text(f"Подписка с ID **{sub_id_to_delete}** не найдена в вашем списке.")
 
 async def paid_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Обрабатывает команду /paid <ID_подписки>.
-    Обновляет дату следующего платежа и сбрасывает статус напоминаний.
-    """
+
     user_id = update.effective_user.id
     args = context.args
+
+    print(f"[DEBUG-HANDLERS] Пользователь {user_id} вызвал /paid.")
 
     if not args:
         await update.message.reply_text(
@@ -165,6 +156,14 @@ async def paid_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
 
     success, service_name, new_date_str = await update_subscription_after_payment(user_id, sub_id_to_mark_paid)
+
+    logger.info(f"Пользователь {user_id} пытается отметить подписку ID {sub_id_to_mark_paid} как оплаченную.")
+    print(f"[DEBUG-DB] Поиск подписки: user_id={user_id}, sub_id={sub_id_to_mark_paid}")
+
+    if success:
+        logger.info(f"Подписка ID {sub_id_to_mark_paid} успешно обновлена. Новая дата: {new_date_str}")
+    else:
+        logger.warning(f"Не удалось обновить подписку ID {sub_id_to_mark_paid} для пользователя {user_id}.")
 
     if success:
         await update.message.reply_text(
