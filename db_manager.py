@@ -38,10 +38,7 @@ async def get_subscribtion_by_user(user_id: int) -> list[tuple]:
     return subscriptions
 
 async def delete_subscription(user_id: int, sub_id: int) -> bool:
-    """
-    Удаляет подписку по user_id и ID подписки.
-    Возвращает True, если подписка была удалена, иначе False.
-    """
+
     async with aiosqlite.connect(DB_NAME) as con:
         cur = await con.cursor()
         await cur.execute("DELETE FROM subscriptions WHERE user_id = ? AND id = ?", (user_id, sub_id))

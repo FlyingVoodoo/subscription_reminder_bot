@@ -3,7 +3,6 @@ import datetime
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 
-# Импортируем асинхронные функции из db_manager.py
 from db_manager import get_subscriptions_for_reminders, update_reminder_status, get_overdue_subscriptions
 
 logger = logging.getLogger(__name__)
