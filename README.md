@@ -58,16 +58,14 @@ Telegram-бот для удобного отслеживания и напоми
 
 Пошаговая инструкция
 
-    Клонируйте репозиторий:
-    Bash
+Клонируйте репозиторий:
 
-git clone https://github.com/FlyingVoodoo/subscription_reminder_bot.git
-cd subscription_reminder_bot
+    git clone https://github.com/FlyingVoodoo/subscription_reminder_bot.git
+    cd subscription_reminder_bot
 
 Создайте и активируйте виртуальное окружение:
 
 Windows:
-Bash
 
     python -m venv venv
     venv\Scripts\activate
@@ -86,7 +84,7 @@ Bash
 Создайте файл .env:
 В корневой директории проекта создайте файл с именем .env и добавьте в него ваш токен Telegram-бота:
 
-TELEGRAM_BOT_TOKEN="ВАШ_ТОКЕН_БОТА"
+    TELEGRAM_BOT_TOKEN="ВАШ_ТОКЕН_БОТА"
 
 (Получить токен можно у @BotFather в Telegram).
 
