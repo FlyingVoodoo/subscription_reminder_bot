@@ -23,10 +23,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "✅ Отметить подписку как оплаченную: **/paid <ID>**\n"
         "🗑️ Удалить подписку: **/delete <ID>**\n\n"
         "Если нужна помощь, просто напиши **/help**.",
-        parse_mode=ParseMode.MARKDOWN # Используем MARKDOWN для жирного текста и эмодзи
+        parse_mode=ParseMode.MARKDOWN 
     )
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "Вот список команд, которые я понимаю:\n\n"
         "**/add** - Начать процесс добавления новой подписки. Я попрошу название, сумму и дату следующей оплаты.\n"
@@ -37,7 +37,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "   _Пример:_ `/delete 456`\n"
         "**/cancel** - Отменить любую текущую операцию (например, если ты добавляешь подписку, но передумал).\n\n"
         "Если у тебя возникнут вопросы, не стесняйся спрашивать!",
-        parse_mode=ParseMode.MARKDOWN # Используем MARKDOWN для жирного и курсива
+        parse_mode=ParseMode.MARKDOWN 
     )
 
 # --- Function for command /add (Conversation Handler) ---
