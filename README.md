@@ -1,5 +1,5 @@
 # **🤖 Subscription Reminder Bot**
-![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Telegram-бот для удобного отслеживания и напоминаний о ваших регулярных подписках и платежах.
