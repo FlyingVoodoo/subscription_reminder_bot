@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
-    await update.message.reply_html(
-        f"Привет, {user.mention_html()}! 👋\n\n"
+    await update.message.reply_text(
+        f"Привет, {user.mention_markdown()}!👋\n\n"
         "Я твой личный помощник для отслеживания подписок и регулярных платежей. "
         "Я буду напоминать тебе о предстоящих оплатах, чтобы ты ничего не пропустил!\n\n"
         "**Что я умею:**\n"
@@ -116,13 +116,21 @@ async def list_subscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await update.message.reply_text("У вас пока нет активных подписок. Используйте /add для добавления первой!")
         return
     
-    message_text = "Ваши подписки:\n\n"
+    message_parts = [
+        "Вот список твоих активных подписок: \n",
+        "**ID | Сервис | Сумма| Следующая оплата**"
+    ]
     for sub_id, service_name, amount, next_payment_date in subscriptions:
-        message_text += f"**ID {sub_id}**\n" \
-                        f"Сервис: {service_name}\n" \
-                        f"Сумма: {amount: .2f}\n" \
-                        f"Дата оплаты: {next_payment_date}\n\n"
-    await update.message.reply_text(message_text, parse_mode='Markdown')
+        message_parts.append(f"`{sub_id}` | **{service_name}** | {amount:.2f} RUB | `{next_payment_date}`") \
+
+    message_parts.append("\n_Чтобы отметить оплату, используй: /paid `<ID>`_\n")
+    message_parts.append("_Чтобы удалить подписку, используй: /delete `<ID>`_\n")
+    message_parts.append("_ID подписки указан в первой колонке_")     
+
+    await update.message.reply_text(
+        "\n".join(message_parts),
+        parse_mode=ParseMode.MARKDOWN
+    )
 
 async def delete_subscription_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
  
