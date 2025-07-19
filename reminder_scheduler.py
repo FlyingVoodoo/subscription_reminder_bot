@@ -48,7 +48,7 @@ async def check_and_send_reminders(context: ContextTypes.DEFAULT_TYPE) -> None:
                 f"Завтра, **{next_payment_date}**, наступает срок оплаты подписки:\n"
                 f"Сервис: **{service_name}**\n"
                 f"Сумма: **{amount:.2f}**\n\n"
-                f"Чтобы отметить подписку как оплаченную, используйте команду: `/paid {sub_id}`"
+                f"Чтобы отметить подписку как оплаченную, используйте команду: /paid {sub_id}"
             )
             try:
                 await context.bot.send_message(chat_id=user_id, text=message, parse_mode=ParseMode.MARKDOWN)
