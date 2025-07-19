@@ -71,13 +71,11 @@ Windows:
     venv\Scripts\activate
 
 macOS/Linux:
-Bash
 
     python3 -m venv venv
     source venv/bin/activate
 
 Установите зависимости:
-Bash
 
     pip install -r requirements.txt
 
