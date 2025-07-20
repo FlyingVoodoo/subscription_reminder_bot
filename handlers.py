@@ -44,19 +44,34 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def add_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Starting add-process and asks for name of serv"""
-    await update.message.reply_text('Отлично! Добавим новую подпискую Введите название сервиса:')
+    await update.message.reply_text(
+        "📝 Отлично! Давай добавим новую подписку.\n"
+        "**Шаг 1 из 3:** Введи название сервиса (например, 'Netflix', 'Яндекс.Плюс'):\n\n"
+        "_Если хочешь отменить добавление, просто напиши_ **/cancel**.",
+        parse_mode=ParseMode.MARKDOWN
+    )
     return ADD_SERVICE_NAME 
 
 async def add_service_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Getiing name of serv and asking user for summ"""
     context.user_data['service_name'] = update.message.text
-    await update.message.reply_text(f'Хорошо, "{context.user_data["service_name"]}". Теперь введите сумму платежа (например), "9.99"):')
+    await update.message.reply_text(
+        f"Хорошо, **'{context.user_data['service_name']}'**. Теперь **Шаг 2 из 3:** Введи сумму платежа (например, `9.99` или `100.50`):\n\n"
+        "_Если хочешь отменить, напиши_ **/cancel**.",
+        parse_mode=ParseMode.MARKDOWN
+    )
     return ADD_AMOUNT
+
 async def add_amount(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    amount_str = update.message.text
     try:
         ammount = float(update.message.text.replace('.', '.'))
         context.user_data['amount'] = ammount
-        await update.message.reply_text('Понял. Теперь введите дату следующей оплаты в формате ГГГГ-ММ-ДД (например, "2025-07-15"):')
+        await update.message.reply_text(
+            f"Понял, сумма: **{ammount:.2f} RUB**. И последний шаг – **Шаг 3 из 3:** Введи дату следующей оплаты в формате ГГГГ-ММ-ДД (например, `2025-07-25`):\n\n"
+            "_Если хочешь отменить, напиши_ **/cancel**.",
+            parse_mode=ParseMode.MARKDOWN
+        )
         return ADD_DATE
     except ValueError:
         await update.message.reply_text('Это не похоже на число. Пожалуйста, введите сумму цифрами (например, "9.99"):')
@@ -80,10 +95,13 @@ async def add_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             amount=context.user_data['amount'],
             next_payment_date=date_str
         )
+        
         await update.message.reply_text(
-            f"Отлично! Подписка '{context.user_data['service_name']}' на сумму {context.user_data['amount']} RUB. "
-            f"со следующей оплатой {date_str} добавлена."
+            f"Отлично! Подписка **'{context.user_data['service_name']}'** на сумму {context.user_data['amount']} RUB со следующей оплатой **{date_str}** добавлена. "
+            "Чтобы посмотреть все свои подписки, используй команду **/list**.",
+            parse_mode=ParseMode.MARKDOWN
         )
+
         return ConversationHandler.END
     except ValueError as e:
         logging.info(f"Ошибка парсинга даты '{date_str}': {e}")
@@ -177,7 +195,7 @@ async def paid_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text(
             "Пожалуйста, укажите ID подписки, которую вы оплатили. "
             "Чтобы узнать ID, используйте команду /list.\n"
-            "Пример: `/paid 123`"
+            "Пример: /paid 123"
         )
         return
 
@@ -202,11 +220,15 @@ async def paid_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     if success:
         await update.message.reply_text(
-            f"Подписка **'{service_name}'** (ID: {sub_id_to_mark_paid}) успешно обновлена. "
-            f"Следующая дата оплаты: **{new_date_str}**. Напоминания сброшены."
+            f"✅ **Оплата подтверждена для '{service_name}'!** ✅\n"
+            f"Следующая дата оплаты перенесена на **{new_date_str}**. "
+            "Я сбросил напоминания для этой подписки.",
+            parse_mode=ParseMode.MARKDOWN
         )
     else:
         await update.message.reply_text(
-            f"Не удалось обновить подписку с ID **{sub_id_to_mark_paid}**. "
-            "Возможно, такой подписки не существует или она не принадлежит вам."
+            f"❌ **Ошибка!** ❌\n"
+            f"Не удалось найти подписку с ID `{sub_id_to_mark_paid}` для твоего аккаунта, или что-то пошло не так.\n"
+            "Убедись, что ID правильный. Можешь проверить свои подписки командой **/list**.",
+            parse_mode=ParseMode.MARKDOWN
         )
